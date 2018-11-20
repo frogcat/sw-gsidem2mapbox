@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8' />
+  <title>sw-gsidem2mapbox</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.css' rel='stylesheet' />
+</head>
+
+<body style="padding:0;margin:0;">
+
+  <div id='map' style='position:absolute;top:0;bottom:0;width:100%;'></div>
+  <script>
+    navigator.serviceWorker.register('./sw-gsidem2mapbox.js', {
+      scope: './'
+    });
+
+    new mapboxgl.Map({
+      container: 'map',
+      style: {
+        "version": 8,
+        "sources": {
+          "gsi-pale": {
+            "type": "raster",
+            "tiles": [
+              "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html'>地理院タイル</a>"
+          },
+          "dem": {
+            "type": "raster-dem",
+            "tiles": [
+              "https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "maxzoom": 15,
+            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html'>地理院タイル</a>"
+          }
+        },
+        "layers": [{
+          "id": "gsi-pale",
+          "source": "gsi-pale",
+          "type": "raster"
+        }, {
+          "id": "hillshading",
+          "source": "dem",
+          "type": "hillshade"
+        }]
+      },
+      center: [138.74, 35.36],
+      zoom: 10,
+      hash: true
+    });
+  </script>
+
+</body>
+
+</html>
