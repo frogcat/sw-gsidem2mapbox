@@ -1,14 +1,3 @@
-self.importScripts('pngjs.js');
-
-const decode = function(buffer) {
-  return new Promise(resolve => {
-    new png.PNG().parse(buffer, (error, data) => {
-      if (error) resolve(null);
-      else resolve(data);
-    });
-  });
-};
-
 const gsidem2mapbox = function(data) {
   var length = data.length;
   for (var i = 0; i < length; i += 4) {
@@ -33,12 +22,23 @@ self.addEventListener('fetch', (event) => {
 
   var promise =
     fetch(url)
-    .then(a => a.ok ? a.arrayBuffer() : null)
-    .then(src => decode(src))
-    .then(data => {
-      if (!data) return Response.error();
-      gsidem2mapbox(data.data);
-      return new Response(png.PNG.sync.write(data), {
+    .then(a => a.ok ? a.blob() : null)
+    .then(blob => blob ? self.createImageBitmap(blob) : null)
+    .then(image => {
+      var canvas = new OffscreenCanvas(256, 256);
+      var context = canvas.getContext("2d");
+      if (image) {
+        context.drawImage(image, 0, 0);
+      } else {
+        context.fillStyle = "#000000";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      gsidem2mapbox(imageData.data);
+      context.putImageData(imageData, 0, 0);
+      return canvas.convertToBlob();
+    }).then(blob => {
+      return new Response(blob, {
         type: "image/png"
       });
     });
