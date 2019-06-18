@@ -5,8 +5,8 @@
   <meta charset='utf-8' />
   <title>sw-gsidem2mapbox</title>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.js'></script>
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.css' rel='stylesheet' />
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css' rel='stylesheet' />
 </head>
 
 <body style="padding:0;margin:0;">
@@ -30,7 +30,7 @@
               "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"
             ],
             "tileSize": 256,
-            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html'>地理院タイル</a>"
+            "attribution": "地理院タイル"
           },
           "dem": {
             "type": "raster-dem",
@@ -39,8 +39,25 @@
             ],
             "tileSize": 256,
             "maxzoom": 15,
-            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html'>地理院タイル</a>"
+            "attribution": "地理院タイル"
+          },
+          "experimental_rdcl": {
+            "type": "vector",
+            "tiles": [
+              "https://cyberjapandata.gsi.go.jp/xyz/experimental_rdcl/{z}/{x}/{y}.geojson"
+            ],
+            "maxzoom": 16,
+            "minzoom": 16
+          },
+          "experimental_landformclassification1": {
+            "type": "vector",
+            "tiles": [
+              "https://cyberjapandata.gsi.go.jp/xyz/experimental_landformclassification1/{z}/{x}/{y}.geojson"
+            ],
+            "maxzoom": 16,
+            "minzoom": 14
           }
+
         },
         "layers": [{
           "id": "gsi-pale",
@@ -50,6 +67,28 @@
           "id": "hillshading",
           "source": "dem",
           "type": "hillshade"
+        }, {
+          "type": "fill",
+          "id": "experimental_landformclassification1",
+          "source": "experimental_landformclassification1",
+          "source-layer": "geojsonLayer",
+          "maxzoom": 22,
+          "minzoom": 14,
+          "paint": {
+            "fill-color": "orange",
+            "fill-opacity": 0.5
+          }
+        }, {
+          "type": "line",
+          "id": "experimental_rdcl",
+          "source": "experimental_rdcl",
+          "source-layer": "geojsonLayer",
+          "maxzoom": 22,
+          "paint": {
+            "line-color": "navy",
+            "line-width": 16,
+            "line-blur": 4
+          }
         }]
       },
       center: [138.74, 35.36],

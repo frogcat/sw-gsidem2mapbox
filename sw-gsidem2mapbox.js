@@ -1,3 +1,6 @@
+importScripts("https://unpkg.com/geojson-vt@3.2.0/geojson-vt.js");
+importScripts("https://frogcat.github.io/vt-pbf/vtpbf.bundle.js");
+
 const gsidem2mapbox = function(data) {
   var length = data.length;
   for (var i = 0; i < length; i += 4) {
@@ -15,6 +18,42 @@ const gsidem2mapbox = function(data) {
 self.addEventListener('fetch', (event) => {
 
   var url = event.request.url;
+
+  if (url.match(/^https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/[^/]+\/([0-9]+)\/([0-9]+)\/([0-9]+)\.geojson$/)) {
+    var z = parseInt(RegExp.$1);
+    var x = parseInt(RegExp.$2);
+    var y = parseInt(RegExp.$3);
+
+    var promise =
+      fetch(url)
+      .then(a => a.ok ? a.json() : {
+        "type": "FeatureCollection",
+        "features": []
+      })
+      .then(json => {
+        var tileIndex = geojsonvt(json, {
+          indexMaxZoom: z,
+          maxZoom: z
+        });
+        var tile = tileIndex.getTile(z, x, y);
+        if (tile) {
+          return new Response(vtpbf.fromGeojsonVt({
+            'geojsonLayer': tile
+          }), {
+            type: "application/vnd.mapbox-vector-tile"
+          });
+        } else {
+          return new Response(null, {
+            status: 404,
+            statusText: "404 Not Found"
+          });
+        }
+      });
+
+    event.respondWith(promise);
+    return;
+  }
+
   if (url.indexOf("https://cyberjapandata.gsi.go.jp/xyz/dem_png/") !== 0) return;
   var zoom = parseInt(url.split("/")[5]);
   if (zoom === 15) url = url.replace("/dem_png/", "/dem5a_png/");
