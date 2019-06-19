@@ -46,8 +46,8 @@
             "tiles": [
               "https://cyberjapandata.gsi.go.jp/xyz/experimental_rdcl/{z}/{x}/{y}.geojson"
             ],
-            "maxzoom": 16,
-            "minzoom": 16
+            "maxzoom": 13,
+            "minzoom": 13
           },
           "experimental_landformclassification1": {
             "type": "vector",
@@ -60,36 +60,83 @@
 
         },
         "layers": [{
-          "id": "gsi-pale",
-          "source": "gsi-pale",
-          "type": "raster"
-        }, {
-          "id": "hillshading",
-          "source": "dem",
-          "type": "hillshade"
-        }, {
-          "type": "fill",
-          "id": "experimental_landformclassification1",
-          "source": "experimental_landformclassification1",
-          "source-layer": "geojsonLayer",
-          "maxzoom": 22,
-          "minzoom": 14,
-          "paint": {
-            "fill-color": "orange",
-            "fill-opacity": 0.5
+            "id": "gsi-pale",
+            "source": "gsi-pale",
+            "type": "raster"
+          },
+          /*{
+                   "id": "hillshading",
+                   "source": "dem",
+                   "type": "hillshade"
+                 }, {
+                   "type": "fill",
+                   "id": "experimental_landformclassification1",
+                   "source": "experimental_landformclassification1",
+                   "source-layer": "geojsonLayer",
+                   "maxzoom": 22,
+                   "minzoom": 14,
+                   "paint": {
+                     "fill-color": "orange",
+                     "fill-opacity": 0.5
+                   }
+                 }, */
+          {
+            "type": "line",
+            "id": "experimental_rdcl_1",
+            "source": "experimental_rdcl",
+            "source-layer": "geojsonLayer",
+            "maxzoom": 22,
+            "filter": ["==", "rnkWidth", "19.5m以上"],
+            "paint": {
+              "line-color": "green",
+              "line-width": 26
+            }
+          }, {
+            "type": "line",
+            "id": "experimental_rdcl_2",
+            "source": "experimental_rdcl",
+            "source-layer": "geojsonLayer",
+            "maxzoom": 22,
+            "filter": ["==", "rnkWidth", "13m-19.5m未満"],
+            "paint": {
+              "line-color": "brown",
+              "line-width": 18
+            }
+          }, {
+            "type": "line",
+            "id": "experimental_rdcl_3",
+            "source": "experimental_rdcl",
+            "source-layer": "geojsonLayer",
+            "maxzoom": 22,
+            "filter": ["==", "rnkWidth", "5.5m-13m未満"],
+            "paint": {
+              "line-color": "orange",
+              "line-width": 10
+            }
+          }, {
+            "type": "line",
+            "id": "experimental_rdcl_4",
+            "source": "experimental_rdcl",
+            "source-layer": "geojsonLayer",
+            "maxzoom": 22,
+            "filter": ["==", "rnkWidth", "3m-5.5m未満"],
+            "paint": {
+              "line-color": "purple",
+              "line-width": 8
+            }
+          }, {
+            "type": "line",
+            "id": "experimental_rdcl_5",
+            "source": "experimental_rdcl",
+            "source-layer": "geojsonLayer",
+            "maxzoom": 22,
+            "filter": ["==", "rnkWidth", "3m未満"],
+            "paint": {
+              "line-color": "red",
+              "line-width": 2
+            }
           }
-        }, {
-          "type": "line",
-          "id": "experimental_rdcl",
-          "source": "experimental_rdcl",
-          "source-layer": "geojsonLayer",
-          "maxzoom": 22,
-          "paint": {
-            "line-color": "navy",
-            "line-width": 16,
-            "line-blur": 4
-          }
-        }]
+        ]
       },
       center: [138.74, 35.36],
       zoom: 10,

@@ -15,40 +15,64 @@ const gsidem2mapbox = function(data) {
   }
 };
 
+const KNOWN_ZOOM = {
+  "experimental_rdcl": 16
+};
+
 self.addEventListener('fetch', (event) => {
 
   var url = event.request.url;
 
-  if (url.match(/^https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/[^/]+\/([0-9]+)\/([0-9]+)\/([0-9]+)\.geojson$/)) {
-    var z = parseInt(RegExp.$1);
-    var x = parseInt(RegExp.$2);
-    var y = parseInt(RegExp.$3);
+  if (url.match(/^https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/([^/]+)\/([0-9]+)\/([0-9]+)\/([0-9]+)\.geojson$/)) {
+    var id = RegExp.$1;
+    var z = parseInt(RegExp.$2);
+    var x = parseInt(RegExp.$3);
+    var y = parseInt(RegExp.$4);
 
-    var promise =
-      fetch(url)
-      .then(a => a.ok ? a.json() : {
+    var urls = [];
+    if (KNOWN_ZOOM[id] !== undefined) {
+      var tz = KNOWN_ZOOM[id];
+      var n = Math.pow(2, tz - z);
+      for (var dy = 0; dy < n; dy++) {
+        for (var dx = 0; dx < n; dx++) {
+          urls.push(`https://cyberjapandata.gsi.go.jp/xyz/${id}/${tz}/${x*n+dx}/${y*n+dy}.geojson`);
+        }
+      }
+    } else {
+      urls.push(url);
+    }
+
+    var promise = Promise.all(urls.map(u => fetch(u).then(a => a.ok ? a.json() : {
+      "type": "FeatureCollection",
+      "features": []
+    }))).then(jsons => {
+
+      const json = {
         "type": "FeatureCollection",
         "features": []
-      })
-      .then(json => {
-        var tileIndex = geojsonvt(json, {
-          indexMaxZoom: z,
-          maxZoom: z
-        });
-        var tile = tileIndex.getTile(z, x, y);
-        if (tile) {
-          return new Response(vtpbf.fromGeojsonVt({
-            'geojsonLayer': tile
-          }), {
-            type: "application/vnd.mapbox-vector-tile"
-          });
-        } else {
-          return new Response(null, {
-            status: 404,
-            statusText: "404 Not Found"
-          });
-        }
+      };
+      jsons.forEach(b => {
+        json.features = json.features.concat(b.features);
       });
+
+      var tileIndex = geojsonvt(json, {
+        indexMaxZoom: z,
+        maxZoom: z
+      });
+      var tile = tileIndex.getTile(z, x, y);
+      if (tile) {
+        return new Response(vtpbf.fromGeojsonVt({
+          'geojsonLayer': tile
+        }), {
+          type: "application/vnd.mapbox-vector-tile"
+        });
+      } else {
+        return new Response(null, {
+          status: 404,
+          statusText: "404 Not Found"
+        });
+      }
+    });
 
     event.respondWith(promise);
     return;
