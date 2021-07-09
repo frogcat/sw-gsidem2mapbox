@@ -2,148 +2,75 @@
 <html>
 
 <head>
-  <meta charset='utf-8' />
+  <meta charset="utf-8" />
   <title>sw-gsidem2mapbox</title>
-  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js'></script>
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css' rel='stylesheet' />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet" />
 </head>
 
 <body style="padding:0;margin:0;">
 
-  <div id='map' style='position:absolute;top:0;bottom:0;width:100%;'></div>
+  <div id="map" style="position:absolute;top:0;bottom:0;width:100%;"></div>
   <script>
-    navigator.serviceWorker.register('./sw-gsidem2mapbox.js', {
-      scope: './'
-    }).then(registration => {
-      if (!navigator.serviceWorker.controller) location.reload();
-    });
+    mapboxgl.accessToken = "pk.eyJ1IjoiZnJvZ2NhdCIsImEiOiJja3F2eHphaTIwaXZyMm9xYTA2dWM4OWFiIn0.qOsduIQl6haUclsafQK4Sw";
 
-    new mapboxgl.Map({
-      container: 'map',
-      style: {
-        "version": 8,
-        "sources": {
-          "gsi-pale": {
-            "type": "raster",
-            "tiles": [
-              "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"
-            ],
-            "tileSize": 256,
-            "attribution": "地理院タイル"
-          },
-          "dem": {
-            "type": "raster-dem",
-            "tiles": [
-              "https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png"
-            ],
-            "tileSize": 256,
-            "maxzoom": 15,
-            "attribution": "地理院タイル"
-          },
-          "experimental_rdcl": {
-            "type": "vector",
-            "tiles": [
-              "https://cyberjapandata.gsi.go.jp/xyz/experimental_rdcl/{z}/{x}/{y}.geojson"
-            ],
-            "maxzoom": 13,
-            "minzoom": 13
-          },
-          "experimental_landformclassification1": {
-            "type": "vector",
-            "tiles": [
-              "https://cyberjapandata.gsi.go.jp/xyz/experimental_landformclassification1/{z}/{x}/{y}.geojson"
-            ],
-            "maxzoom": 16,
-            "minzoom": 14
-          }
-
+    const style = {
+      "version": 8,
+      "sources": {
+        "raster": {
+          "type": "raster",
+          "minzoom": 2,
+          "maxzoom": 18,
+          "tileSize": 256,
+          "tiles": [
+            "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"
+          ],
+          "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html'>地理院タイル</a>"
         },
-        "layers": [{
-            "id": "gsi-pale",
-            "source": "gsi-pale",
-            "type": "raster"
-          },
-          /*{
-                   "id": "hillshading",
-                   "source": "dem",
-                   "type": "hillshade"
-                 }, {
-                   "type": "fill",
-                   "id": "experimental_landformclassification1",
-                   "source": "experimental_landformclassification1",
-                   "source-layer": "geojsonLayer",
-                   "maxzoom": 22,
-                   "minzoom": 14,
-                   "paint": {
-                     "fill-color": "orange",
-                     "fill-opacity": 0.5
-                   }
-                 }, */
-          {
-            "type": "line",
-            "id": "experimental_rdcl_1",
-            "source": "experimental_rdcl",
-            "source-layer": "geojsonLayer",
-            "maxzoom": 22,
-            "filter": ["==", "rnkWidth", "19.5m以上"],
-            "paint": {
-              "line-color": "green",
-              "line-width": 26
-            }
-          }, {
-            "type": "line",
-            "id": "experimental_rdcl_2",
-            "source": "experimental_rdcl",
-            "source-layer": "geojsonLayer",
-            "maxzoom": 22,
-            "filter": ["==", "rnkWidth", "13m-19.5m未満"],
-            "paint": {
-              "line-color": "brown",
-              "line-width": 18
-            }
-          }, {
-            "type": "line",
-            "id": "experimental_rdcl_3",
-            "source": "experimental_rdcl",
-            "source-layer": "geojsonLayer",
-            "maxzoom": 22,
-            "filter": ["==", "rnkWidth", "5.5m-13m未満"],
-            "paint": {
-              "line-color": "orange",
-              "line-width": 10
-            }
-          }, {
-            "type": "line",
-            "id": "experimental_rdcl_4",
-            "source": "experimental_rdcl",
-            "source-layer": "geojsonLayer",
-            "maxzoom": 22,
-            "filter": ["==", "rnkWidth", "3m-5.5m未満"],
-            "paint": {
-              "line-color": "purple",
-              "line-width": 8
-            }
-          }, {
-            "type": "line",
-            "id": "experimental_rdcl_5",
-            "source": "experimental_rdcl",
-            "source-layer": "geojsonLayer",
-            "maxzoom": 22,
-            "filter": ["==", "rnkWidth", "3m未満"],
-            "paint": {
-              "line-color": "red",
-              "line-width": 2
-            }
-          }
-        ]
+        "terrain": {
+          "type": "raster-dem",
+          "minzoom": 1,
+          "maxzoom": 15,
+          "tileSize": 256,
+          "tiles": [
+            "https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png"
+          ],
+          "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html'>地理院タイル</a>"
+        }
       },
-      center: [138.74, 35.36],
-      zoom: 10,
-      hash: true
-    });
-  </script>
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "layers": [{
+        "id": "raster",
+        "source": "raster",
+        "type": "raster",
+        "maxzoom": 24
+      }],
+      "zoom": 12,
+      "center": [138.78267, 35.28505],
+      "pitch": 70,
+      "bearing": -30
+    };
 
+    (async function() {
+      await navigator.serviceWorker.register("./sw-gsidem2mapbox.js");
+      if (!navigator.serviceWorker.controller) {
+        location.reload();
+      } else {
+        const map = new mapboxgl.Map({
+          container: "map",
+          style: style,
+          hash: true
+        });
+        map.addControl(new mapboxgl.FullscreenControl());
+        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new mapboxgl.ScaleControl());
+      }
+    })();
+  </script>
 </body>
 
 </html>

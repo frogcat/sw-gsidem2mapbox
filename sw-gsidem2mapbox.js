@@ -1,6 +1,3 @@
-importScripts("https://unpkg.com/geojson-vt@3.2.0/geojson-vt.js");
-importScripts("https://frogcat.github.io/vt-pbf/vtpbf.bundle.js");
-
 const gsidem2mapbox = function(data) {
   var length = data.length;
   for (var i = 0; i < length; i += 4) {
@@ -15,97 +12,69 @@ const gsidem2mapbox = function(data) {
   }
 };
 
-const KNOWN_ZOOM = {
-  "experimental_rdcl": 16
-};
-
 self.addEventListener('fetch', (event) => {
 
-  var url = event.request.url;
+  if (!event.request.url.match(/^https\:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/dem_png\/([0-9]+)\/([0-9]+)\/([0-9]+)\.png$/)) return;
 
-  if (url.match(/^https:\/\/cyberjapandata\.gsi\.go\.jp\/xyz\/([^/]+)\/([0-9]+)\/([0-9]+)\/([0-9]+)\.geojson$/)) {
-    var id = RegExp.$1;
-    var z = parseInt(RegExp.$2);
-    var x = parseInt(RegExp.$3);
-    var y = parseInt(RegExp.$4);
+  const z = parseInt(RegExp.$1);
+  const x = parseInt(RegExp.$2);
+  const y = parseInt(RegExp.$3);
 
-    var urls = [];
-    if (KNOWN_ZOOM[id] !== undefined) {
-      var tz = KNOWN_ZOOM[id];
-      var n = Math.pow(2, tz - z);
-      for (var dy = 0; dy < n; dy++) {
-        for (var dx = 0; dx < n; dx++) {
-          urls.push(`https://cyberjapandata.gsi.go.jp/xyz/${id}/${tz}/${x*n+dx}/${y*n+dy}.geojson`);
-        }
-      }
-    } else {
-      urls.push(url);
-    }
+  const urls = [];
 
-    var promise = Promise.all(urls.map(u => fetch(u).then(a => a.ok ? a.json() : {
-      "type": "FeatureCollection",
-      "features": []
-    }))).then(jsons => {
-
-      const json = {
-        "type": "FeatureCollection",
-        "features": []
-      };
-      jsons.forEach(b => {
-        json.features = json.features.concat(b.features);
-      });
-
-      var tileIndex = geojsonvt(json, {
-        indexMaxZoom: z,
-        maxZoom: z
-      });
-      var tile = tileIndex.getTile(z, x, y);
-      if (tile) {
-        return new Response(vtpbf.fromGeojsonVt({
-          'geojsonLayer': tile
-        }), {
-          type: "application/vnd.mapbox-vector-tile"
-        });
-      } else {
-        return new Response(null, {
-          status: 404,
-          statusText: "404 Not Found"
-        });
-      }
-    });
-
-    event.respondWith(promise);
-    return;
+  switch (z) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+      urls.push(`https://cyberjapandata.gsi.go.jp/xyz/demgm_png/${z}/${x}/${y}.png`);
+      break;
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+      urls.push(`https://cyberjapandata.gsi.go.jp/xyz/dem_png/${z}/${x}/${y}.png`);
+      break;
+    case 15:
+      urls.push(`https://cyberjapandata.gsi.go.jp/xyz/dem5a_png/${z}/${x}/${y}.png`);
+      urls.push(`https://cyberjapandata.gsi.go.jp/xyz/dem5b_png/${z}/${x}/${y}.png`);
+      urls.push(`https://cyberjapandata.gsi.go.jp/xyz/dem5c_png/${z}/${x}/${y}.png`);
+      break;
+    default:
+      return;
   }
 
-  if (url.indexOf("https://cyberjapandata.gsi.go.jp/xyz/dem_png/") !== 0) return;
-  var zoom = parseInt(url.split("/")[5]);
-  if (zoom === 15) url = url.replace("/dem_png/", "/dem5a_png/");
-  else if (zoom <= 8) url = url.replace("/dem_png/", "/demgm_png/");
+  event.respondWith(async function() {
+    try {
+      let res = await fetch(urls.shift());
+      while (!res.ok && urls.length > 0)
+        res = await fetch(urls.shift());
 
-  var promise =
-    fetch(url)
-    .then(a => a.ok ? a.blob() : null)
-    .then(blob => blob ? self.createImageBitmap(blob) : null)
-    .then(image => {
-      var canvas = new OffscreenCanvas(256, 256);
-      var context = canvas.getContext("2d");
-      if (image) {
-        context.drawImage(image, 0, 0);
+      if (!res.ok) {
+        //console.info("not ok", res);
+        return res;
       } else {
-        context.fillStyle = "#000000";
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        //console.info("ok", res);
+        const imageBitmap = await self.createImageBitmap(await res.blob());
+        const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+        const context = canvas.getContext("2d");
+        context.drawImage(imageBitmap, 0, 0);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        gsidem2mapbox(imageData.data);
+        context.putImageData(imageData, 0, 0);
+        return new Response(await canvas.convertToBlob(), {
+          type: "image/png"
+        });
       }
-      var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      gsidem2mapbox(imageData.data);
-      context.putImageData(imageData, 0, 0);
-      return canvas.convertToBlob();
-    }).then(blob => {
-      return new Response(blob, {
-        type: "image/png"
-      });
-    });
-
-  event.respondWith(promise);
-
+    } catch (e) {
+      console.info("reject", e);
+      throw e;
+    };
+  }());
 });
