@@ -4,6 +4,9 @@
 
 主に mapbox-gl-js version 2.x の環境で、地理院標高タイルをソースとした terrain や hillshade を実現することを目的としています。
 
+> [!IMPORTANT]
+> このレポジトリは 2025-12-04 にアーカイブされました。後継は [frogcat/dempng-worker](https://github.com/frogcat/dempng-worker) です。
+
 # Demo
 
 [![sw-gsidem2mapbox
